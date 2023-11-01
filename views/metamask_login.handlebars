@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaMask Login</title>
+</head>
+<body>
+    
+    <button id="metamaskButton">Login to MetaMask</button></br>
+    <p>Ensure you have metamask installed</p>
+
+    <script>
+        document.getElementById('metamaskButton').addEventListener('click', function() {
+            checkMetaMask(); // calls the function when the button is clicked
+        });
+
+        function checkMetaMask() {
+            if (window.ethereum) {
+                window.ethereum
+                    .request({ method: 'eth_accounts' })
+                    .then(function (accounts) {
+                        if (accounts.length > 0) {
+                            const userAddress = accounts[0];
+                            sendDataToBackend(userAddress); // send userAddress to backend
+                        } else {
+                            promptToConnect(); // prompt user to log in
+                        }
+                    })
+                    .catch(function (error) {
+                        alert("Faied to fetch accounts")
+                    });
+            } else {
+                alert("Metamask is not installed, please install metamask!")
+            }
+        }
+
+        function promptToConnect() {
+            window.ethereum
+                .request({ method: 'eth_requestAccounts' })
+                .then(function (accounts) {
+                    if (accounts.length > 0) {
+                        const userAddress = accounts[0];
+                        sendDataToBackend(userAddress); // send userAddress to backend
+                    } else {
+                        alert("Please login to Metamask, before proceeding")
+                    }
+                })
+                .catch(function (error) {
+                    alert("Error during login to Metamask")
+                });
+        }
+
+        function sendDataToBackend(data) {
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ address: data })
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.redirectTo;
+            })
+            .catch(error => console.error('Error sending data to backend:', error));
+            }
+    </script>
+
+</body>
+</html>

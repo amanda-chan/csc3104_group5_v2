@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create a Campaign</title>
+</head>
+<body>
+    <h1>Create a Campaign</h1>
+    <form id="createCampaignForm" action="/create_campaign" method="post">
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title" required><br><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"></textarea><br><br>
+
+        <label for="funding_target">Funding Target (ETH):</label><br>
+        <input type="number" id="funding_target" name="funding_target" step="0.001" required><br><br>
+
+        <label for="minimum_contribution">Minimum Contribution (ETH):</label><br>
+        <input type="number" id="minimum_contribution" name="minimum_contribution" step="0.001" required><br><br>
+        
+        <input type="submit" value="Create Campaign">
+    </form>
+    <script>
+
+        document.getElementById('createCampaignForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            // check current MetaMask account and send user's Ethereum address before submitting the form
+            checkMetaMask();
+        });
+
+        async function checkMetaMask() {
+            if (window.ethereum) {
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    if (accounts.length > 0) {
+                        const userAddress = accounts[0];
+                        sendDataToBackend(userAddress); // send current userAddress to the backend
+                    } else {
+                        alert("Please log in to MetaMask before proceeding");
+                    }
+                } catch (error) {
+                    alert("Error during login to MetaMask");
+                }
+            } else {
+                alert("MetaMask is not installed; please install MetaMask");
+            }
+        }
+
+        function sendDataToBackend(data) {
+
+            // get form values
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const fundingTarget = document.getElementById('funding_target').value;
+            const minimumContribution = document.getElementById('minimum_contribution').value;
+
+            const formData = {
+                title: title,
+                description: description,
+                funding_target: fundingTarget,
+                minimum_contribution: minimumContribution,
+                address: data // Ethereum address
+            };
+
+            fetch('/create_campaign', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.redirectTo;
+                alert("Campaign created successfully!")
+            })
+            .catch(error => console.error('Error sending data to backend:', error));
+        }
+        
+    </script>
+</body>
+</html>
